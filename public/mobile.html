@@ -190,11 +190,11 @@
         }
 
         .time-slot {
-            padding: 14px;
+            padding: 14px 8px;
             border-radius: 10px;
             text-align: center;
             font-weight: 600;
-            font-size: 16px;
+            font-size: 15px;
             cursor: pointer;
             transition: all 0.2s;
             background: var(--background);
@@ -756,21 +756,21 @@
                 const response = await fetch(`${API_URL}/courts/${selectedCourt}/schedule?date=${date}`);
                 const data = await response.json();
 
-                // Generate time slots
-                const times = [];
-                for (let hour = 8; hour <= 20; hour++) {
-                    times.push(`${hour.toString().padStart(2, '0')}:00`);
-                    if (hour < 20) {
-                        times.push(`${hour.toString().padStart(2, '0')}:30`);
-                    }
-                }
-
                 // Check if selected date is today
-                const selectedDate = new Date(date);
+                const selectedDate = new Date(date + 'T00:00:00');
                 const today = new Date();
                 const isToday = selectedDate.toDateString() === today.toDateString();
                 const currentHour = today.getHours();
                 const currentMinute = today.getMinutes();
+
+                // Generate time slots (24-hour format for internal use)
+                const times = [];
+                for (let hour = 8; hour <= 20; hour++) {
+                    times.push({ hour, minute: 0 });
+                    if (hour < 20) {
+                        times.push({ hour, minute: 30 });
+                    }
+                }
 
                 // Calculate ALL time slots occupied by each reservation
                 const bookedTimes = new Set();
@@ -789,24 +789,31 @@
                 });
 
                 container.innerHTML = '';
-                times.forEach(time => {
-                    const [hour, minute] = time.split(':').map(Number);
-                    
+                times.forEach(({hour, minute}) => {
                     // Skip past times if today
                     if (isToday) {
                         if (hour < currentHour || (hour === currentHour && minute <= currentMinute)) {
-                            return; // Don't render past times
+                            return; // Don't render past times at all
                         }
                     }
 
+                    // Convert to 12-hour format for display
+                    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                    const ampm = hour >= 12 ? 'PM' : 'AM';
+                    const displayTime = `${displayHour}:${minute.toString().padStart(2, '0')} ${ampm}`;
+                    
+                    // Store 24-hour format for booking
+                    const time24 = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+
                     const slot = document.createElement('div');
                     slot.className = 'time-slot';
-                    slot.textContent = time;
+                    slot.textContent = displayTime;
+                    slot.dataset.time24 = time24; // Store for booking
 
-                    if (bookedTimes.has(time)) {
+                    if (bookedTimes.has(time24)) {
                         slot.classList.add('unavailable');
                     } else {
-                        slot.onclick = () => selectTime(time);
+                        slot.onclick = () => selectTime(time24, displayTime);
                     }
 
                     container.appendChild(slot);
@@ -817,8 +824,8 @@
         }
 
         // Select time
-        function selectTime(time) {
-            selectedTime = time;
+        function selectTime(time24, displayTime) {
+            selectedTime = time24; // Store 24-hour format for API
             document.querySelectorAll('.time-slot').forEach(slot => {
                 slot.classList.remove('selected');
             });
