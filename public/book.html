@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book a Court - Court Reservation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+
+        .step {
+            margin-bottom: 40px;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            margin-right: 15px;
+        }
+
+        .step-title {
+            font-size: 24px;
+            color: #333;
+        }
+
+        .courts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .court-card {
+            border: 3px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .court-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .court-card.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+        }
+
+        .court-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .court-details {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .court-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #e0e0e0;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border 0.3s;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+        }
+
+        .time-slot {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .time-slot:hover:not(.unavailable) {
+            border-color: #667eea;
+            background: #f5f7ff;
+        }
+
+        .time-slot.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .time-slot.unavailable {
+            background: #f5f5f5;
+            color: #999;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .btn {
+            padding: 16px 32px;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+
+        .confirmation {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .confirmation-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .confirmation-code {
+            background: #667eea;
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 3px;
+            margin: 30px 0;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .summary-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .summary-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 32px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .courts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .time-slots {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎾 Book a Court</h1>
+            <p>Reserve your court time in just a few clicks</p>
+        </div>
+
+        <!-- Main Booking Form -->
+        <div id="bookingForm" class="card">
+            <!-- Step 1: Select Court -->
+            <div class="step">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <div class="step-title">Choose Your Court</div>
+                </div>
+                <div id="courtsContainer" class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading available courts...</p>
+                </div>
+            </div>
+
+            <!-- Step 2: Select Date & Time -->
+            <div class="step">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <div class="step-title">Select Date & Time</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="bookingDate">Date</label>
+                    <input type="date" id="bookingDate" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Time Slot</label>
+                    <div id="timeSlotsContainer" class="time-slots">
+                        <p style="grid-column: 1/-1; text-align: center; color: #999;">Select a date to see available times</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="duration">Duration</label>
+                    <select id="duration">
+                        <option value="30">30 minutes</option>
+                        <option value="60" selected>1 hour</option>
+                        <option value="90">1.5 hours</option>
+                        <option value="120">2 hours</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Step 3: Your Information -->
+            <div class="step">
+                <div class="step-header">
+                    <div class="step-number">3</div>
+                    <div class="step-title">Your Information</div>
+                </div>
+
+                <div id="authChoice">
+                    <div class="alert alert-info">
+                        <strong>New user?</strong> Create an account or login to complete your booking.
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" placeholder="your@email.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" placeholder="Enter password" required>
+                    </div>
+
+                    <div class="form-group" id="registerFields" class="hidden">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" placeholder="Your name">
+
+                        <label for="phone" style="margin-top: 15px;">Phone Number (optional)</label>
+                        <input type="tel" id="phone" placeholder="555-123-4567">
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="isNewUser" onchange="toggleRegisterFields()">
+                            I'm a new user (create account)
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Additional Notes (optional)</label>
+                    <textarea id="notes" rows="3" placeholder="Any special requests or notes..."></textarea>
+                </div>
+            </div>
+
+            <!-- Error/Success Messages -->
+            <div id="messageContainer"></div>
+
+            <!-- Book Button -->
+            <button class="btn btn-primary" onclick="submitBooking()" id="bookButton">
+                Complete Booking
+            </button>
+        </div>
+
+        <!-- Confirmation Screen (hidden initially) -->
+        <div id="confirmationScreen" class="card hidden">
+            <div class="confirmation">
+                <div class="confirmation-icon">✅</div>
+                <h2>Booking Confirmed!</h2>
+                <p style="margin: 20px 0; font-size: 18px; color: #666;">Your court has been reserved.</p>
+
+                <div class="confirmation-code" id="confirmationCode">
+                    PB-123-ABC
+                </div>
+
+                <div style="max-width: 400px; margin: 0 auto; text-align: left;">
+                    <div class="summary-item">
+                        <span class="summary-label">Court:</span>
+                        <span class="summary-value" id="summaryECourt"></span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Date:</span>
+                        <span class="summary-value" id="summaryDate"></span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Time:</span>
+                        <span class="summary-value" id="summaryTime"></span>
+                    </div>
+                    <div class="summary-item" style="border-bottom: none;">
+                        <span class="summary-label">Duration:</span>
+                        <span class="summary-value" id="summaryDuration"></span>
+                    </div>
+                </div>
+
+                <div class="alert alert-info" style="margin-top: 30px;">
+                    <strong>Confirmation email sent!</strong><br>
+                    Check your inbox for booking details and your confirmation code.
+                </div>
+
+                <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 20px;">
+                    Make Another Booking
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-detect API URL
+        const API_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000/api'
+            : `${window.location.protocol}//${window.location.host}/api`;
+        let selectedCourt = null;
+        let selectedTime = null;
+        let authToken = null;
+        let courts = [];
+
+        // Load courts on page load
+        loadCourts();
+
+        // Set minimum date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('bookingDate').setAttribute('min', today);
+
+        // Toggle register fields
+        function toggleRegisterFields() {
+            const isNew = document.getElementById('isNewUser').checked;
+            const registerFields = document.getElementById('registerFields');
+            if (isNew) {
+                registerFields.classList.remove('hidden');
+            } else {
+                registerFields.classList.add('hidden');
+            }
+        }
+
+        // Load available courts
+        async function loadCourts() {
+            try {
+                const response = await fetch(`${API_URL}/courts`);
+                const data = await response.json();
+                
+                courts = data.courts;
+                displayCourts(courts);
+            } catch (error) {
+                document.getElementById('courtsContainer').innerHTML = `
+                    <div class="alert alert-error">
+                        Failed to load courts. Please refresh the page.
+                    </div>
+                `;
+            }
+        }
+
+        // Display courts
+        function displayCourts(courts) {
+            const container = document.getElementById('courtsContainer');
+            
+            if (courts.length === 0) {
+                container.innerHTML = `<p>No courts available at this time.</p>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            container.className = 'courts-grid';
+
+            courts.forEach(court => {
+                const card = document.createElement('div');
+                card.className = 'court-card';
+                card.onclick = () => selectCourt(court.id);
+                card.id = `court-${court.id}`;
+                
+                card.innerHTML = `
+                    <div class="court-name">${court.name}</div>
+                    <div class="court-details">📍 ${court.facility_name}</div>
+                    <div class="court-details">${court.surface_type}</div>
+                    <span class="court-badge">${court.is_indoor ? '🏢 Indoor' : '☀️ Outdoor'}</span>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        // Select court
+        function selectCourt(courtId) {
+            selectedCourt = courtId;
+            document.querySelectorAll('.court-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.getElementById(`court-${courtId}`).classList.add('selected');
+
+            // If date is selected, refresh time slots
+            const date = document.getElementById('bookingDate').value;
+            if (date) {
+                loadTimeSlots();
+            }
+        }
+
+        // Listen for date change
+        document.getElementById('bookingDate').addEventListener('change', loadTimeSlots);
+
+        // Load time slots (simplified for demo - generates times 8am-8pm)
+        async function loadTimeSlots() {
+            if (!selectedCourt) {
+                showMessage('Please select a court first', 'error');
+                return;
+            }
+
+            const date = document.getElementById('bookingDate').value;
+            if (!date) return;
+
+            const container = document.getElementById('timeSlotsContainer');
+            container.innerHTML = '<p style="grid-column: 1/-1;">Loading available times...</p>';
+
+            try {
+                // Check existing reservations for this court/date
+                const response = await fetch(`${API_URL}/courts/${selectedCourt}/schedule?date=${date}`);
+                const data = await response.json();
+
+                // Generate time slots (8am - 8pm)
+                const times = [];
+                for (let hour = 8; hour <= 20; hour++) {
+                    times.push(`${hour.toString().padStart(2, '0')}:00`);
+                    if (hour < 20) {
+                        times.push(`${hour.toString().padStart(2, '0')}:30`);
+                    }
+                }
+
+                // Check which times are available
+                const bookedTimes = data.reservations.map(r => {
+                    const start = new Date(r.start_time);
+                    return `${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')}`;
+                });
+
+                container.innerHTML = '';
+                times.forEach(time => {
+                    const slot = document.createElement('div');
+                    slot.className = 'time-slot';
+                    slot.textContent = time;
+
+                    if (bookedTimes.includes(time)) {
+                        slot.classList.add('unavailable');
+                    } else {
+                        slot.onclick = () => selectTime(time);
+                    }
+
+                    container.appendChild(slot);
+                });
+            } catch (error) {
+                container.innerHTML = `<p style="grid-column: 1/-1; color: red;">Failed to load time slots</p>`;
+            }
+        }
+
+        // Select time
+        function selectTime(time) {
+            selectedTime = time;
+            document.querySelectorAll('.time-slot').forEach(slot => {
+                slot.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+        }
+
+        // Submit booking
+        async function submitBooking() {
+            // Validation
+            if (!selectedCourt) {
+                showMessage('Please select a court', 'error');
+                return;
+            }
+
+            const date = document.getElementById('bookingDate').value;
+            if (!date) {
+                showMessage('Please select a date', 'error');
+                return;
+            }
+
+            if (!selectedTime) {
+                showMessage('Please select a time slot', 'error');
+                return;
+            }
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                showMessage('Please enter your email and password', 'error');
+                return;
+            }
+
+            const bookButton = document.getElementById('bookButton');
+            bookButton.disabled = true;
+            bookButton.textContent = 'Processing...';
+
+            try {
+                // First, authenticate (login or register)
+                const isNewUser = document.getElementById('isNewUser').checked;
+                
+                if (isNewUser) {
+                    // Register
+                    const name = document.getElementById('name').value;
+                    const phone = document.getElementById('phone').value;
+
+                    if (!name) {
+                        showMessage('Please enter your name', 'error');
+                        bookButton.disabled = false;
+                        bookButton.textContent = 'Complete Booking';
+                        return;
+                    }
+
+                    const registerResponse = await fetch(`${API_URL}/auth/register`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password, name, phone })
+                    });
+
+                    const registerData = await registerResponse.json();
+                    
+                    if (!registerData.success) {
+                        showMessage(registerData.message || 'Registration failed', 'error');
+                        bookButton.disabled = false;
+                        bookButton.textContent = 'Complete Booking';
+                        return;
+                    }
+
+                    authToken = registerData.token;
+                } else {
+                    // Login
+                    const loginResponse = await fetch(`${API_URL}/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    const loginData = await loginResponse.json();
+                    
+                    if (!loginData.success) {
+                        showMessage(loginData.message || 'Login failed', 'error');
+                        bookButton.disabled = false;
+                        bookButton.textContent = 'Complete Booking';
+                        return;
+                    }
+
+                    authToken = loginData.token;
+                }
+
+                // Now create the reservation
+                const duration = parseInt(document.getElementById('duration').value);
+                const notes = document.getElementById('notes').value;
+
+                const bookResponse = await fetch(`${API_URL}/reservations`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        court_id: selectedCourt,
+                        date: date,
+                        start_time: selectedTime,
+                        duration: duration,
+                        notes: notes
+                    })
+                });
+
+                const bookData = await bookResponse.json();
+                
+                if (!bookData.success) {
+                    showMessage(bookData.message || 'Booking failed', 'error');
+                    bookButton.disabled = false;
+                    bookButton.textContent = 'Complete Booking';
+                    return;
+                }
+
+                // Success! Show confirmation
+                showConfirmation(bookData.reservation);
+
+            } catch (error) {
+                showMessage('An error occurred. Please try again.', 'error');
+                bookButton.disabled = false;
+                bookButton.textContent = 'Complete Booking';
+            }
+        }
+
+        // Show confirmation screen
+        function showConfirmation(reservation) {
+            document.getElementById('bookingForm').classList.add('hidden');
+            document.getElementById('confirmationScreen').classList.remove('hidden');
+
+            const court = courts.find(c => c.id === selectedCourt);
+            const startDate = new Date(reservation.start_time);
+            const endDate = new Date(reservation.end_time);
+
+            document.getElementById('confirmationCode').textContent = reservation.confirmation_code;
+            document.getElementById('summaryECourt').textContent = court.name;
+            document.getElementById('summaryDate').textContent = startDate.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            document.getElementById('summaryTime').textContent = 
+                `${startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - ${endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+            document.getElementById('summaryDuration').textContent = `${reservation.duration_minutes} minutes`;
+
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        // Show message
+        function showMessage(message, type) {
+            const container = document.getElementById('messageContainer');
+            container.innerHTML = `
+                <div class="alert alert-${type}">
+                    ${message}
+                </div>
+            `;
+
+            // Auto-dismiss success messages
+            if (type === 'success') {
+                setTimeout(() => {
+                    container.innerHTML = '';
+                }, 5000);
+            }
+        }
+    </script>
+</body>
+</html>

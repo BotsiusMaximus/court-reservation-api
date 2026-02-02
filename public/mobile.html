@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="application-name" content="Court Reservation">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Courts">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#667eea">
+    
+    <!-- iOS Splash Screens -->
+    <link rel="apple-touch-icon" href="/icon.svg">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="manifest" href="/manifest.json">
+    
+    <title>Court Reservation</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5568d3;
+            --secondary: #764ba2;
+            --success: #34c759;
+            --danger: #ff3b30;
+            --warning: #ff9500;
+            --background: #f2f2f7;
+            --card: #ffffff;
+            --text: #000000;
+            --text-secondary: #8e8e93;
+            --border: #c6c6c8;
+            --safe-area-top: env(safe-area-inset-top);
+            --safe-area-bottom: env(safe-area-inset-bottom);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+            background: var(--background);
+            color: var(--text);
+            overflow-x: hidden;
+            padding-bottom: calc(70px + var(--safe-area-bottom));
+            padding-top: var(--safe-area-top);
+        }
+
+        /* Header */
+        .header {
+            background: var(--card);
+            padding: 16px 20px;
+            padding-top: calc(16px + var(--safe-area-top));
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 34px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 15px;
+            margin-top: 4px;
+        }
+
+        /* Content */
+        .content {
+            padding: 16px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        /* Courts Grid */
+        .courts-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .court-item {
+            background: var(--background);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .court-item:active {
+            transform: scale(0.98);
+        }
+
+        .court-item.selected {
+            border-color: var(--primary);
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .court-info h3 {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .court-info p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .court-badge {
+            background: var(--primary);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 17px;
+            background: var(--card);
+            font-family: inherit;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Time Slots */
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .time-slot {
+            padding: 14px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--background);
+            border: 2px solid transparent;
+        }
+
+        .time-slot:active {
+            transform: scale(0.95);
+        }
+
+        .time-slot.selected {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .time-slot.unavailable {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: var(--background);
+            color: var(--primary);
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 14px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            font-size: 15px;
+        }
+
+        .alert-success {
+            background: rgba(52, 199, 89, 0.15);
+            color: var(--success);
+        }
+
+        .alert-error {
+            background: rgba(255, 59, 48, 0.15);
+            color: var(--danger);
+        }
+
+        .alert-info {
+            background: rgba(102, 126, 234, 0.15);
+            color: var(--primary);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            padding-bottom: calc(8px + var(--safe-area-bottom));
+            z-index: 1000;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 6px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid var(--background);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 0.8s linear infinite;
+            margin: 40px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Hidden */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Loading State */
+        .loading-text {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 20px;
+        }
+
+        /* My Bookings */
+        .booking-item {
+            background: var(--background);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .booking-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .booking-court {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .booking-status {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .booking-status.confirmed {
+            background: rgba(52, 199, 89, 0.15);
+            color: var(--success);
+        }
+
+        .booking-info {
+            display: flex;
+            gap: 16px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .booking-code {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Confirmation */
+        .confirmation {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .confirmation-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .confirmation-code {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin: 24px 0;
+        }
+
+        /* Install Prompt */
+        .install-prompt {
+            background: var(--primary);
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .install-prompt-text {
+            flex: 1;
+        }
+
+        .install-prompt-text h3 {
+            font-size: 17px;
+            margin-bottom: 4px;
+        }
+
+        .install-prompt-text p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .install-btn {
+            background: white;
+            color: var(--primary);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Pull to Refresh */
+        .pull-to-refresh {
+            text-align: center;
+            padding: 10px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Install Prompt (iOS) -->
+    <div id="installPrompt" class="content hidden">
+        <div class="install-prompt">
+            <div class="install-prompt-text">
+                <h3>Install App</h3>
+                <p>Add to home screen for quick access</p>
+            </div>
+            <button class="install-btn" onclick="showInstallInstructions()">Install</button>
+        </div>
+    </div>
+
+    <!-- Tab: Book a Court -->
+    <div id="bookTab" class="tab-content">
+        <div class="header">
+            <h1>🎾 Book a Court</h1>
+            <p>Reserve your court time</p>
+        </div>
+
+        <div class="content">
+            <!-- Courts -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Select Court</div>
+                </div>
+                <div id="courtsContainer" class="courts-grid">
+                    <div class="spinner"></div>
+                    <div class="loading-text">Loading courts...</div>
+                </div>
+            </div>
+
+            <!-- Date & Time -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Date & Time</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" id="bookingDate" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Time Slot</label>
+                    <div id="timeSlotsContainer" class="time-slots">
+                        <div style="grid-column: 1/-1;" class="loading-text">Select a date</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Duration</label>
+                    <select id="duration" class="form-select">
+                        <option value="30">30 minutes</option>
+                        <option value="60" selected>1 hour</option>
+                        <option value="90">1.5 hours</option>
+                        <option value="120">2 hours</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Login/Register (if not logged in) -->
+            <div id="authSection" class="card">
+                <div class="card-header">
+                    <div class="card-title">Your Account</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="email" class="form-input" placeholder="your@email.com">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="Password">
+                </div>
+
+                <div id="registerFields" class="hidden">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" id="name" class="form-input" placeholder="Your name">
+                    </div>
+                </div>
+
+                <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                    <input type="checkbox" id="isNewUser" onchange="toggleRegisterFields()">
+                    <span>I'm a new user</span>
+                </label>
+            </div>
+
+            <!-- Message -->
+            <div id="messageContainer"></div>
+
+            <!-- Book Button -->
+            <button class="btn btn-primary" onclick="submitBooking()" id="bookButton">
+                Complete Booking
+            </button>
+        </div>
+    </div>
+
+    <!-- Tab: My Bookings -->
+    <div id="bookingsTab" class="tab-content hidden">
+        <div class="header">
+            <h1>📅 My Bookings</h1>
+            <p>Your reservations</p>
+        </div>
+
+        <div class="content">
+            <div id="bookingsContainer">
+                <div class="spinner"></div>
+                <div class="loading-text">Loading bookings...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab: Profile -->
+    <div id="profileTab" class="tab-content hidden">
+        <div class="header">
+            <h1>👤 Profile</h1>
+            <p>Your account</p>
+        </div>
+
+        <div class="content">
+            <div class="card">
+                <div id="profileInfo">
+                    <div class="loading-text">Loading profile...</div>
+                </div>
+            </div>
+
+            <button class="btn btn-secondary" onclick="logout()">
+                Log Out
+            </button>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('book')">
+            <div class="nav-icon">🎾</div>
+            <div class="nav-label">Book</div>
+        </div>
+        <div class="nav-item" onclick="switchTab('bookings')">
+            <div class="nav-icon">📅</div>
+            <div class="nav-label">Bookings</div>
+        </div>
+        <div class="nav-item" onclick="switchTab('profile')">
+            <div class="nav-icon">👤</div>
+            <div class="nav-label">Profile</div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-detect API URL
+        const API_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000/api'
+            : `${window.location.protocol}//${window.location.host}/api`;
+
+        let selectedCourt = null;
+        let selectedTime = null;
+        let authToken = localStorage.getItem('userToken');
+        let courts = [];
+
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(reg => console.log('SW registered'))
+                .catch(err => console.log('SW error:', err));
+        }
+
+        // Check if iOS and not installed
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isInstalled = window.matchMedia('(display-mode: standalone)').matches;
+        if (isIOS && !isInstalled) {
+            document.getElementById('installPrompt').classList.remove('hidden');
+        }
+
+        function showInstallInstructions() {
+            alert('To install:\n\n1. Tap the Share button (□↑)\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add"');
+        }
+
+        // Load courts on page load
+        loadCourts();
+
+        // Set minimum date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('bookingDate').setAttribute('min', today);
+        document.getElementById('bookingDate').addEventListener('change', loadTimeSlots);
+
+        // Tab switching
+        function switchTab(tab) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            
+            // Show selected tab
+            document.getElementById(tab + 'Tab').classList.remove('hidden');
+            
+            // Update nav
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            // Load data for tab
+            if (tab === 'bookings') {
+                loadMyBookings();
+            } else if (tab === 'profile') {
+                loadProfile();
+            }
+        }
+
+        // Toggle register fields
+        function toggleRegisterFields() {
+            const isNew = document.getElementById('isNewUser').checked;
+            const registerFields = document.getElementById('registerFields');
+            if (isNew) {
+                registerFields.classList.remove('hidden');
+            } else {
+                registerFields.classList.add('hidden');
+            }
+        }
+
+        // Load courts
+        async function loadCourts() {
+            try {
+                const response = await fetch(`${API_URL}/courts`);
+                const data = await response.json();
+                
+                courts = data.courts;
+                displayCourts(courts);
+            } catch (error) {
+                document.getElementById('courtsContainer').innerHTML = `
+                    <div class="alert alert-error">Failed to load courts</div>
+                `;
+            }
+        }
+
+        // Display courts
+        function displayCourts(courts) {
+            const container = document.getElementById('courtsContainer');
+            
+            if (courts.length === 0) {
+                container.innerHTML = '<div class="loading-text">No courts available</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+
+            courts.forEach(court => {
+                const item = document.createElement('div');
+                item.className = 'court-item';
+                item.onclick = () => selectCourt(court.id);
+                item.id = `court-${court.id}`;
+                
+                item.innerHTML = `
+                    <div class="court-info">
+                        <h3>${court.name}</h3>
+                        <p>${court.facility_name} • ${court.surface_type}</p>
+                    </div>
+                    <div class="court-badge">${court.is_indoor ? '🏢' : '☀️'}</div>
+                `;
+
+                container.appendChild(item);
+            });
+        }
+
+        // Select court
+        function selectCourt(courtId) {
+            selectedCourt = courtId;
+            document.querySelectorAll('.court-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            document.getElementById(`court-${courtId}`).classList.add('selected');
+
+            const date = document.getElementById('bookingDate').value;
+            if (date) {
+                loadTimeSlots();
+            }
+        }
+
+        // Load time slots
+        async function loadTimeSlots() {
+            if (!selectedCourt) {
+                showMessage('Please select a court first', 'error');
+                return;
+            }
+
+            const date = document.getElementById('bookingDate').value;
+            if (!date) return;
+
+            const container = document.getElementById('timeSlotsContainer');
+            container.innerHTML = '<div style="grid-column: 1/-1;" class="loading-text">Loading times...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/courts/${selectedCourt}/schedule?date=${date}`);
+                const data = await response.json();
+
+                // Generate time slots
+                const times = [];
+                for (let hour = 8; hour <= 20; hour++) {
+                    times.push(`${hour.toString().padStart(2, '0')}:00`);
+                    if (hour < 20) {
+                        times.push(`${hour.toString().padStart(2, '0')}:30`);
+                    }
+                }
+
+                const bookedTimes = data.reservations.map(r => {
+                    const start = new Date(r.start_time);
+                    return `${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')}`;
+                });
+
+                container.innerHTML = '';
+                times.forEach(time => {
+                    const slot = document.createElement('div');
+                    slot.className = 'time-slot';
+                    slot.textContent = time;
+
+                    if (bookedTimes.includes(time)) {
+                        slot.classList.add('unavailable');
+                    } else {
+                        slot.onclick = () => selectTime(time);
+                    }
+
+                    container.appendChild(slot);
+                });
+            } catch (error) {
+                container.innerHTML = '<div style="grid-column: 1/-1;" class="alert alert-error">Failed to load times</div>';
+            }
+        }
+
+        // Select time
+        function selectTime(time) {
+            selectedTime = time;
+            document.querySelectorAll('.time-slot').forEach(slot => {
+                slot.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+        }
+
+        // Submit booking
+        async function submitBooking() {
+            if (!selectedCourt || !document.getElementById('bookingDate').value || !selectedTime) {
+                showMessage('Please select court, date, and time', 'error');
+                return;
+            }
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                showMessage('Please enter email and password', 'error');
+                return;
+            }
+
+            const bookButton = document.getElementById('bookButton');
+            bookButton.disabled = true;
+            bookButton.textContent = 'Processing...';
+
+            try {
+                const isNewUser = document.getElementById('isNewUser').checked;
+                
+                if (isNewUser) {
+                    const name = document.getElementById('name').value;
+                    if (!name) {
+                        showMessage('Please enter your name', 'error');
+                        bookButton.disabled = false;
+                        bookButton.textContent = 'Complete Booking';
+                        return;
+                    }
+
+                    const registerResponse = await fetch(`${API_URL}/auth/register`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password, name })
+                    });
+
+                    const registerData = await registerResponse.json();
+                    
+                    if (!registerData.success) {
+                        showMessage(registerData.message || 'Registration failed', 'error');
+                        bookButton.disabled = false;
+                        bookButton.textContent = 'Complete Booking';
+                        return;
+                    }
+
+                    authToken = registerData.token;
+                    localStorage.setItem('userToken', authToken);
+                } else {
+                    const loginResponse = await fetch(`${API_URL}/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    const loginData = await loginResponse.json();
+                    
+                    if (!loginData.success) {
+                        showMessage(loginData.message || 'Login failed', 'error');
+                        bookButton.disabled = false;
+                        bookButton.textContent = 'Complete Booking';
+                        return;
+                    }
+
+                    authToken = loginData.token;
+                    localStorage.setItem('userToken', authToken);
+                }
+
+                const date = document.getElementById('bookingDate').value;
+                const duration = parseInt(document.getElementById('duration').value);
+
+                const bookResponse = await fetch(`${API_URL}/reservations`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        court_id: selectedCourt,
+                        date: date,
+                        start_time: selectedTime,
+                        duration: duration
+                    })
+                });
+
+                const bookData = await bookResponse.json();
+                
+                if (!bookData.success) {
+                    showMessage(bookData.message || 'Booking failed', 'error');
+                    bookButton.disabled = false;
+                    bookButton.textContent = 'Complete Booking';
+                    return;
+                }
+
+                // Success!
+                showMessage('✅ Booking confirmed!', 'success');
+                setTimeout(() => {
+                    switchTab('bookings');
+                    loadMyBookings();
+                }, 1500);
+
+            } catch (error) {
+                showMessage('An error occurred. Please try again.', 'error');
+                bookButton.disabled = false;
+                bookButton.textContent = 'Complete Booking';
+            }
+        }
+
+        // Load my bookings
+        async function loadMyBookings() {
+            const container = document.getElementById('bookingsContainer');
+            
+            if (!authToken) {
+                container.innerHTML = '<div class="card"><div class="loading-text">Please log in to view bookings</div></div>';
+                return;
+            }
+
+            container.innerHTML = '<div class="spinner"></div><div class="loading-text">Loading...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/reservations`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                const data = await response.json();
+
+                if (!data.success || data.reservations.length === 0) {
+                    container.innerHTML = '<div class="card"><div class="loading-text">No bookings yet</div></div>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                data.reservations.forEach(booking => {
+                    const startDate = new Date(booking.start_time);
+                    const endDate = new Date(booking.end_time);
+                    
+                    const item = document.createElement('div');
+                    item.className = 'booking-item';
+                    item.innerHTML = `
+                        <div class="booking-header">
+                            <div class="booking-court">${booking.court_name}</div>
+                            <div class="booking-status ${booking.status}">${booking.status}</div>
+                        </div>
+                        <div class="booking-info">
+                            <span>📅 ${startDate.toLocaleDateString()}</span>
+                            <span>🕐 ${startDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                            <span>⏱️ ${booking.duration_minutes}min</span>
+                        </div>
+                        <div class="booking-code">Code: ${booking.confirmation_code}</div>
+                    `;
+                    container.appendChild(item);
+                });
+            } catch (error) {
+                container.innerHTML = '<div class="alert alert-error">Failed to load bookings</div>';
+            }
+        }
+
+        // Load profile
+        async function loadProfile() {
+            const container = document.getElementById('profileInfo');
+            
+            if (!authToken) {
+                container.innerHTML = '<div class="loading-text">Not logged in</div>';
+                return;
+            }
+
+            container.innerHTML = '<div class="loading-text">Loading...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    container.innerHTML = '<div class="loading-text">Failed to load profile</div>';
+                    return;
+                }
+
+                const user = data.user;
+                container.innerHTML = `
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-size: 24px; font-weight: 600; margin-bottom: 8px;">${user.name}</div>
+                        <div style="color: var(--text-secondary);">${user.email}</div>
+                    </div>
+                    <div style="padding: 12px; background: var(--background); border-radius: 10px;">
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;">Member since</div>
+                        <div style="font-weight: 600;">${new Date(user.created_at).toLocaleDateString()}</div>
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = '<div class="alert alert-error">Failed to load profile</div>';
+            }
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('userToken');
+            authToken = null;
+            location.reload();
+        }
+
+        // Show message
+        function showMessage(message, type) {
+            const container = document.getElementById('messageContainer');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+
+            if (type === 'success') {
+                setTimeout(() => {
+                    container.innerHTML = '';
+                }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>

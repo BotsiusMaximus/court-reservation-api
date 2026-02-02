@@ -1,0 +1,462 @@
+{
+  "info": {
+    "name": "Court Reservation API",
+    "_postman_id": "court-reservation-api-v1",
+    "description": "Complete API collection for testing the Court Reservation System.\n\n**Quick Start:**\n1. Register a user or use test account (user1@test.com / password123)\n2. Login to get JWT token (auto-saved to environment)\n3. Test court endpoints\n4. Create reservations\n5. View/cancel bookings",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{TOKEN}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"TOKEN\", jsonData.token);",
+                  "    pm.environment.set(\"USER_ID\", jsonData.user.id);",
+                  "    console.log(\"Token saved:\", jsonData.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@test.com\",\n  \"password\": \"password123\",\n  \"name\": \"New Test User\",\n  \"phone\": \"503-555-9999\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/auth/register",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Register a new user account. Token is automatically saved to environment."
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"TOKEN\", jsonData.token);",
+                  "    pm.environment.set(\"USER_ID\", jsonData.user.id);",
+                  "    console.log(\"✓ Logged in successfully\");",
+                  "    console.log(\"Token:\", jsonData.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user1@test.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/auth/login",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login with email and password. Token is automatically saved for subsequent requests.\n\n**Test Accounts:**\n- user1@test.com / password123\n- user2@test.com / password123\n- admin@test.com / password123"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/api/auth/me",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "auth", "me"]
+            },
+            "description": "Get current authenticated user's profile."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Courts",
+      "item": [
+        {
+          "name": "Get All Courts",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/api/courts",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "courts"],
+              "query": [
+                {
+                  "key": "facility_id",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "is_active",
+                  "value": "true",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get list of all courts. Optional filters: facility_id, is_active."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Court by ID",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/api/courts/1",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "courts", "1"]
+            },
+            "description": "Get details of a specific court."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Court Schedule",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Set today's date automatically",
+                  "const today = new Date().toISOString().split('T')[0];",
+                  "pm.variables.set(\"TODAY\", today);",
+                  "",
+                  "// Set tomorrow's date",
+                  "const tomorrow = new Date();",
+                  "tomorrow.setDate(tomorrow.getDate() + 1);",
+                  "pm.variables.set(\"TOMORROW\", tomorrow.toISOString().split('T')[0]);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/api/courts/1/schedule?date={{TOMORROW}}",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "courts", "1", "schedule"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "{{TOMORROW}}",
+                  "description": "Format: YYYY-MM-DD"
+                }
+              ]
+            },
+            "description": "Get court's schedule for a specific date. Shows all reservations."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reservations",
+      "item": [
+        {
+          "name": "Create Reservation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"RESERVATION_ID\", jsonData.reservation.id);",
+                  "    console.log(\"✓ Reservation created:\", jsonData.reservation.confirmation_code);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Calculate tomorrow's date",
+                  "const tomorrow = new Date();",
+                  "tomorrow.setDate(tomorrow.getDate() + 1);",
+                  "const dateStr = tomorrow.toISOString().split('T')[0];",
+                  "pm.variables.set(\"BOOKING_DATE\", dateStr);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"court_id\": 1,\n  \"date\": \"{{BOOKING_DATE}}\",\n  \"start_time\": \"14:00\",\n  \"duration\": 90,\n  \"notes\": \"Tournament practice session\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/reservations",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "reservations"]
+            },
+            "description": "Create a new court reservation. Automatically checks for conflicts and validates business rules.\n\n**Duration:** 30-240 minutes  \n**Time format:** HH:MM (24-hour)  \n**Date format:** YYYY-MM-DD"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Reservations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/api/reservations?upcoming=true",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "reservations"],
+              "query": [
+                {
+                  "key": "upcoming",
+                  "value": "true",
+                  "description": "Show only upcoming reservations"
+                },
+                {
+                  "key": "status",
+                  "value": "confirmed",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all reservations for the authenticated user. Filters: upcoming, status."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Reservation by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/api/reservations/{{RESERVATION_ID}}",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "reservations", "{{RESERVATION_ID}}"]
+            },
+            "description": "Get details of a specific reservation."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Reservation",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Schedule conflict - cannot make it\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/reservations/{{RESERVATION_ID}}",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "reservations", "{{RESERVATION_ID}}"]
+            },
+            "description": "Cancel a reservation. Must be at least 2 hours before start time (unless admin)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin - Courts",
+      "item": [
+        {
+          "name": "Create Court",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Court 7\",\n  \"facility_id\": 1,\n  \"court_number\": 7,\n  \"surface_type\": \"cushioned court\",\n  \"is_indoor\": true,\n  \"notes\": \"Newly installed LED lighting\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/courts",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "courts"]
+            },
+            "description": "Create a new court (admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Court",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Court 1 - Pro\",\n  \"surface_type\": \"premium cushioned\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/courts/1",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "courts", "1"]
+            },
+            "description": "Update court details (admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Court",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/api/courts/7",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "courts", "7"]
+            },
+            "description": "Delete a court (admin only). Warning: Also deletes all reservations for this court."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/health",
+              "host": ["{{API_URL}}"],
+              "path": ["health"]
+            },
+            "description": "Check if API server is running and healthy."
+          },
+          "response": []
+        },
+        {
+          "name": "API Info",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/",
+              "host": ["{{API_URL}}"],
+              "path": [""]
+            },
+            "description": "Get API version and available endpoints."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "API_URL",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "USER_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "RESERVATION_ID",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "name": "Court Reservation",
+  "short_name": "Courts",
+  "description": "Reserve your court time in just a few taps",
+  "start_url": "/mobile.html",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot1.png",
+      "sizes": "1170x2532",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["sports", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Book a Court",
+      "url": "/mobile.html",
+      "description": "Make a new reservation"
+    },
+    {
+      "name": "My Bookings",
+      "url": "/mobile.html#bookings",
+      "description": "View your reservations"
+    }
+  ]
+}
