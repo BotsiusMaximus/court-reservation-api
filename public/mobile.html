@@ -589,15 +589,15 @@
 
     <!-- Bottom Navigation -->
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('book')">
+        <div class="nav-item active" onclick="switchTab('book', event)">
             <div class="nav-icon">🎾</div>
             <div class="nav-label">Book</div>
         </div>
-        <div class="nav-item" onclick="switchTab('bookings')">
+        <div class="nav-item" onclick="switchTab('bookings', event)">
             <div class="nav-icon">📅</div>
             <div class="nav-label">Bookings</div>
         </div>
-        <div class="nav-item" onclick="switchTab('profile')">
+        <div class="nav-item" onclick="switchTab('profile', event)">
             <div class="nav-icon">👤</div>
             <div class="nav-label">Profile</div>
         </div>
@@ -641,7 +641,7 @@
         document.getElementById('bookingDate').addEventListener('change', loadTimeSlots);
 
         // Tab switching
-        function switchTab(tab) {
+        function switchTab(tab, clickEvent) {
             // Hide all tabs
             document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
             
@@ -650,7 +650,17 @@
             
             // Update nav
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+            
+            // If called from nav click, update active state
+            if (clickEvent && clickEvent.currentTarget) {
+                clickEvent.currentTarget.classList.add('active');
+            } else {
+                // Programmatic call - find and activate the right nav item
+                const navItems = document.querySelectorAll('.nav-item');
+                if (tab === 'book') navItems[0].classList.add('active');
+                if (tab === 'bookings') navItems[1].classList.add('active');
+                if (tab === 'profile') navItems[2].classList.add('active');
+            }
 
             // Load data for tab
             if (tab === 'bookings') {
@@ -755,18 +765,45 @@
                     }
                 }
 
-                const bookedTimes = data.reservations.map(r => {
+                // Check if selected date is today
+                const selectedDate = new Date(date);
+                const today = new Date();
+                const isToday = selectedDate.toDateString() === today.toDateString();
+                const currentHour = today.getHours();
+                const currentMinute = today.getMinutes();
+
+                // Calculate ALL time slots occupied by each reservation
+                const bookedTimes = new Set();
+                data.reservations.forEach(r => {
                     const start = new Date(r.start_time);
-                    return `${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')}`;
+                    const end = new Date(r.end_time);
+                    const durationMinutes = (end - start) / (1000 * 60);
+                    const numSlots = Math.ceil(durationMinutes / 30);
+                    
+                    // Mark all 30-minute slots from start to end
+                    for (let i = 0; i < numSlots; i++) {
+                        const slotTime = new Date(start.getTime() + (i * 30 * 60 * 1000));
+                        const timeStr = `${slotTime.getHours().toString().padStart(2, '0')}:${slotTime.getMinutes().toString().padStart(2, '0')}`;
+                        bookedTimes.add(timeStr);
+                    }
                 });
 
                 container.innerHTML = '';
                 times.forEach(time => {
+                    const [hour, minute] = time.split(':').map(Number);
+                    
+                    // Skip past times if today
+                    if (isToday) {
+                        if (hour < currentHour || (hour === currentHour && minute <= currentMinute)) {
+                            return; // Don't render past times
+                        }
+                    }
+
                     const slot = document.createElement('div');
                     slot.className = 'time-slot';
                     slot.textContent = time;
 
-                    if (bookedTimes.includes(time)) {
+                    if (bookedTimes.has(time)) {
                         slot.classList.add('unavailable');
                     } else {
                         slot.onclick = () => selectTime(time);
@@ -884,9 +921,16 @@
 
                 // Success!
                 showMessage('✅ Booking confirmed!', 'success');
+                
+                // Reset form
+                selectedCourt = null;
+                selectedTime = null;
+                document.querySelectorAll('.court-item').forEach(c => c.classList.remove('selected'));
+                document.querySelectorAll('.time-slot').forEach(t => t.classList.remove('selected'));
+                
+                // Switch to bookings tab after brief delay
                 setTimeout(() => {
                     switchTab('bookings');
-                    loadMyBookings();
                 }, 1500);
 
             } catch (error) {
@@ -899,6 +943,9 @@
         // Load my bookings
         async function loadMyBookings() {
             const container = document.getElementById('bookingsContainer');
+            
+            // Re-check token from localStorage
+            authToken = localStorage.getItem('userToken');
             
             if (!authToken) {
                 container.innerHTML = '<div class="card"><div class="loading-text">Please log in to view bookings</div></div>';
@@ -913,8 +960,14 @@
                 });
 
                 const data = await response.json();
+                console.log('Bookings response:', data);
 
-                if (!data.success || data.reservations.length === 0) {
+                if (!data.success) {
+                    container.innerHTML = `<div class="alert alert-error">Failed to load: ${data.message || 'Unknown error'}</div>`;
+                    return;
+                }
+
+                if (!data.reservations || data.reservations.length === 0) {
                     container.innerHTML = '<div class="card"><div class="loading-text">No bookings yet</div></div>';
                     return;
                 }
@@ -941,7 +994,8 @@
                     container.appendChild(item);
                 });
             } catch (error) {
-                container.innerHTML = '<div class="alert alert-error">Failed to load bookings</div>';
+                console.error('Bookings error:', error);
+                container.innerHTML = `<div class="alert alert-error">Failed to load bookings: ${error.message}</div>`;
             }
         }
 
@@ -969,6 +1023,28 @@
                 }
 
                 const user = data.user;
+                
+                // Format date properly - handle various formats
+                let dateStr = 'Recently';
+                if (user.created_at) {
+                    try {
+                        // Replace space with T for ISO format if needed
+                        const isoDate = user.created_at.replace(' ', 'T');
+                        const memberSince = new Date(isoDate);
+                        
+                        // Check if valid date
+                        if (!isNaN(memberSince.getTime())) {
+                            dateStr = memberSince.toLocaleDateString('en-US', { 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                            });
+                        }
+                    } catch (e) {
+                        console.error('Date parsing error:', e);
+                    }
+                }
+                
                 container.innerHTML = `
                     <div style="margin-bottom: 16px;">
                         <div style="font-size: 24px; font-weight: 600; margin-bottom: 8px;">${user.name}</div>
@@ -976,7 +1052,7 @@
                     </div>
                     <div style="padding: 12px; background: var(--background); border-radius: 10px;">
                         <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;">Member since</div>
-                        <div style="font-weight: 600;">${new Date(user.created_at).toLocaleDateString()}</div>
+                        <div style="font-weight: 600;">${dateStr}</div>
                     </div>
                 `;
             } catch (error) {
