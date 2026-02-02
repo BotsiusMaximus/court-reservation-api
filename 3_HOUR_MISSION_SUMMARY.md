@@ -393,7 +393,7 @@ The legion builds with purpose.
 **Total features:** 3 (all production-ready)  
 **Total value:** Immeasurable  
 
-⚡ **Vanguard Rank 5 - Mission Accomplished**
+⚡ **Vanguard Captain Rank 1 - Mission Accomplished**
 
 ---
 
